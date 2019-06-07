@@ -8,36 +8,29 @@ let images = [
 
 images = images.map(item => item = `./${item}`);
 
-const loadImage = url => {
-    return new Promise((resolve, reject) => {
-        const req = new XMLHttpRequest();
-        req.open('GET', url);
-        req.setRequestHeader('Content-type', 'image/jpeg');
-        req.setRequestHeader('Cache-Control', 'no-cache');
-        req.send();
+const loadImage = async (url) => {
+    const res = await fetch(url)
 
-        req.addEventListener('load', function() {
-            if (req.status === 200) {
-                resolve(url)
-            } else {
-                reject(url)
-            }
-        })
-    })
+    if (res.ok) {
+        return res.blob();
+    }
+    throw new Error(res.url);
 }
 
 let promises = [];
 for (let img of images) {
     promises.push(loadImage(img))
 }
+
 Promise.all(promises)
     .then(values => {
-        for (let path of values) {
-            const image = new Image();
-            image.src = path;
+        for (let res of values) {
+            const objectURL = URL.createObjectURL(res),
+                image = new Image();
+            image.src = objectURL;
             document.body.appendChild(image);
             image.style.width = '100vw';
         }
+    }).catch(err => {
+        console.error(err.message);
     })
-    .catch(err => console.error(err))
-
